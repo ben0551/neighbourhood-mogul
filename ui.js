@@ -100,14 +100,14 @@
       const pct = rep.livingCosts > 0 ? Math.min(100, Math.round(rep.passive / rep.livingCosts * 100)) : 0;
       $('#cf-barfill').style.width = pct + '%';
       $('#cf-barlabel').textContent = `${L('makers')}: ${NM.fmt(rep.passive)} of ${NM.fmt(rep.livingCosts)} bills covered (${pct}%)`;
-      $('#cf-goal').textContent = 'Goal: Money Makers cover all bills';
+      $('#cf-goal').textContent = G.won ? 'Goal reached — keep building!' : 'Goal: Money Makers cover all bills';
     } else {
       barwrap.classList.remove('hidden');
       const w = NM.wealth(G);
       const pct = Math.min(100, Math.round(w / 50000 * 100));
       $('#cf-barfill').style.width = pct + '%';
       $('#cf-barlabel').textContent = `Total Wealth: ${NM.fmt(w)} of $50,000 (${pct}%) · Properties: ${G.properties.length} of 3`;
-      $('#cf-goal').textContent = 'Goal: $50,000 or 3 properties';
+      $('#cf-goal').textContent = G.won ? 'Goal reached — keep building!' : 'Goal: $50,000 or 3 properties';
     }
 
     // action points
@@ -460,7 +460,7 @@
     for (const e of summary.events) items.push({ t: e.text, k: e.kind });
     if (!items.length) items.push({ t: 'A quiet week on the street.', k: '' });
     ul.innerHTML = items.map(i => `<li class="${i.k}">${esc(i.t)}</li>`).join('');
-    $('#wm-note').textContent = summary.won ? '' : `Week ${G.week} begins — you have ${G.ap} actions.`;
+    $('#wm-note').textContent = summary.justWon ? '' : `Week ${G.week} begins — you have ${G.ap} actions.`;
     const rep = NM.weeklyReport(G);
     $('#wm-breakdown').textContent =
       `Salary ${NM.fmt(rep.salary)} · Rent ${NM.fmt(rep.property)} · Business ${NM.fmt(rep.business)}` +
@@ -468,10 +468,9 @@
     $('#modal-week').classList.remove('hidden');
     $('#btn-week-ok').onclick = () => {
       $('#modal-week').classList.add('hidden');
-      if (G.over && G.won) showWin();
+      if (summary.justWon) showWin();
     };
-    if (summary.won) $('#btn-week-ok').textContent = 'See your result →';
-    else $('#btn-week-ok').textContent = 'Keep going →';
+    $('#btn-week-ok').textContent = summary.justWon ? 'See your result →' : 'Keep going →';
   }
 
   function showWin() {
@@ -481,9 +480,9 @@
       <span>Weeks: <b>${G.week - 1}</b></span>
       <span>${L('wealth')}: <b>${NM.fmt(rep.wealth)}</b></span>
       <span>Houses: <b>${G.properties.length}</b></span>
-      <span>Money Makers: <b>${NM.fmt(rep.passive)}/wk</b></span>`;
+      <span>Money Makers: <b>${NM.fmt(rep.passive)}/wk</b></span>
+      <span>Goal reached — keep playing to own an apartment block</span>`;
     $('#modal-win').classList.remove('hidden');
-    clearSave();
   }
 
   // ---------- wiring ----------
@@ -545,7 +544,8 @@
       if (confirm('Restart with a brand new neighbourhood? Your current game will be lost.')) { clearSave(); show('screen-title'); $('#btn-new').click(); }
     };
     $('#btn-quit').onclick = () => { $('#modal-menu').classList.add('hidden'); save(); location.reload(); };
-    $('#btn-win-again').onclick = () => { $('#modal-win').classList.add('hidden'); show('screen-title'); $('#btn-new').click(); };
+    $('#btn-win-continue').onclick = () => $('#modal-win').classList.add('hidden');
+    $('#btn-win-again').onclick = () => { $('#modal-win').classList.add('hidden'); clearSave(); show('screen-title'); $('#btn-new').click(); };
     $('#btn-win-title').onclick = () => { $('#modal-win').classList.add('hidden'); clearSave(); location.reload(); };
 
     // log badge: count entries added since tab last viewed

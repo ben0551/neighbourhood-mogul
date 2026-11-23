@@ -6,10 +6,10 @@ function simulate(mode, seed, maxWeeks) {
   maxWeeks = maxWeeks || 600;
   const s = NM.newGame({ mode, seed, jobId: 'shopassistant' });
   const courseOrder = ['plumbing', 'electrical', 'nursing', 'business', 'engineering', 'law', 'medical'];
-  while (!s.over && s.week <= maxWeeks) {
+  while (!s.won && s.week <= maxWeeks) {
     // spend action points sensibly
     let guard = 8;
-    while (s.ap > 0 && guard-- > 0 && !s.over) {
+    while (s.ap > 0 && guard-- > 0 && !s.won) {
       const rep = NM.weeklyReport(s);
       // pay debt first if any
       if (s.debts.length && s.cash > 2000) { NM.payDebt(s, 2000); continue; }

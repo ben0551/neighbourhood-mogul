@@ -9,7 +9,8 @@ A browser game for ages 8+ that teaches the three big money lessons:
 You start with a small house, a home loan and a simple job. Each week you collect
 income, pay bills, and spend 2 actions on your career, property or finances.
 The winner isn't the richest — the winner reaches **Financial Freedom**: your
-Money Makers (rents and businesses) cover all your bills.
+Money Makers (rents and businesses) cover all your bills. Reaching the goal is a
+milestone, not the end: you can keep building towards the apartment block.
 
 ## Play
 

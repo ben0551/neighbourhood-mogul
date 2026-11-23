@@ -573,19 +573,24 @@
       }
     }
 
-    // win checks
-    if (state.mode === 'beginner') {
-      if (wealth(state) >= 50000 || state.properties.length >= 3) {
-        state.over = true; state.won = true;
-        state.winInfo = wealth(state) >= 50000 ? `Total wealth reached $${wealth(state).toLocaleString()}!` : `You own ${state.properties.length} properties!`;
-      }
-    } else {
-      const r = weeklyReport(state);
-      if (r.passive >= r.livingCosts && r.passive > 0) {
-        state.over = true; state.won = true;
-        state.winInfo = `Financial Freedom! Your Money Makers bring in $${r.passive.toLocaleString()} a week, covering all $${r.livingCosts.toLocaleString()} of your bills.`;
+    // win checks — reaching the goal is a milestone, not the end; the player can keep building
+    const wasWon = state.won;
+    if (!state.won) {
+      if (state.mode === 'beginner') {
+        if (wealth(state) >= 50000 || state.properties.length >= 3) {
+          state.won = true;
+          state.winInfo = wealth(state) >= 50000 ? `Total wealth reached $${wealth(state).toLocaleString()}!` : `You own ${state.properties.length} properties!`;
+        }
+      } else {
+        const r = weeklyReport(state);
+        if (r.passive >= r.livingCosts && r.passive > 0) {
+          state.won = true;
+          state.winInfo = `Financial Freedom! Your Money Makers bring in $${r.passive.toLocaleString()} a week, covering all $${r.livingCosts.toLocaleString()} of your bills.`;
+        }
       }
     }
+    summary.justWon = state.won && !wasWon;
+    if (summary.justWon) addLog(state, 'Goal reached! You can keep building — the apartment block is still out there.', 'good');
     summary.won = state.won;
 
     state.week += 1;
