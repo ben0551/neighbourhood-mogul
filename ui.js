@@ -4,6 +4,7 @@
   const SAVE_KEY = 'nm-save-v1';
   let G = null;                 // game state
   let currentTab = 'town';
+  let seenLog = 0;
   let toastEl = null;
 
   // kid word -> real finance word
@@ -465,7 +466,7 @@
     $('#btn-win-title').onclick = () => { $('#modal-win').classList.add('hidden'); clearSave(); location.reload(); };
 
     // log badge: count entries added since tab last viewed
-    let seenLog = G ? G.log.length : 0;
+    seenLog = G ? G.log.length : 0;
     setInterval(() => {
       if (!G || currentTab === 'log') { seenLog = G ? G.log.length : 0; return; }
       const badge = $('#log-badge');
