@@ -34,7 +34,7 @@ Total Wealth → Net Worth, Borrowing Cost → Interest.
   roads, and parks/schools/ponds filling the empty lots
 - 4 property types (small house, family house, duplex, apartment block) with
   mortgages, deposits, credit-score-dependent interest rates
-- Renovations: paint, kitchen, solar panels, repairs
+- Renovations: paint, kitchen, solar panels (one-time upgrades), repairs (repeatable upkeep — condition drops 1 point a week)
 - Career tree: 3 starter jobs → intermediate trades → professional degrees →
   entrepreneur (businesses)
 - Courses that cost money and take weeks — spend now, earn more later

@@ -234,19 +234,22 @@
         <div class="row"><span>Weekly loan payment</span><b>${NM.fmt(p.payment)} (${(p.rate * 100).toFixed(1)}%)</b></div>
         <div class="row"><span>Condition</span><b>${p.condition}%</b></div>
         <div class="cond-bar"><i style="width:${p.condition}%"></i></div>
+        <div class="tile-sub">Condition drops 1 point a week — Repairs keeps it up.</div>
         <div class="actions">
           <button class="btn small" data-action="reno" data-id="${p.id}">Renovate</button>
           ${p.isHome ? '' : `<button class="btn small ghost" data-action="sell" data-id="${p.id}">Sell</button>`}
         </div>
         <div class="reno-panel hidden" id="reno-${p.id}">
           ${Object.values(NM.DATA.RENOVATIONS).map(r => {
-            const done = p.reno.includes(r.id);
+            const done = r.id !== 'repairs' && p.reno.includes(r.id);
             const bits = [];
             if (r.rent) bits.push(`+${NM.fmt(r.rent)} rent`);
             if (r.condition) bits.push(`+${r.condition} condition`);
             if (r.powerCut) bits.push(`−${Math.round(r.powerCut * 100)}% power`);
-            bits.push(`+${NM.fmt(r.value)} value`);
-            return `<div class="row"><span>${esc(r.name)} <small>(${bits.join(', ')})</small></span>
+            if (r.id !== 'repairs') bits.push(`+${NM.fmt(r.value)} value`);
+            const tag = r.id === 'repairs' ? ' <span class="badge gold">Repeatable</span>' : '';
+            const times = r.id === 'repairs' && p.repairs ? ` <small>(${p.repairs}× so far)</small>` : '';
+            return `<div class="row"><span>${esc(r.name)}${times}${tag} <small>(${bits.join(', ')})</small></span>
               <b>${done ? '<span class="badge good">Done</span>' : `<button class="btn tiny" data-action="renovate" data-id="${p.id}" data-reno="${r.id}" ${G.cash < r.cost ? 'disabled' : ''}>${NM.fmt(r.cost)}</button>`}</b></div>`;
           }).join('')}
         </div>

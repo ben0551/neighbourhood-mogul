@@ -403,17 +403,21 @@
     const p = state.properties.find(x => x.id === propertyId);
     const r = RENOVATIONS[renoId];
     if (!p || !r || state.over) return { ok: false, msg: 'Not available.' };
-    if (p.reno.includes(renoId)) return { ok: false, msg: 'Already done.' };
+    // paint/kitchen/solar are one-time upgrades; repairs are repeatable upkeep
+    if (renoId !== 'repairs' && p.reno.includes(renoId)) return { ok: false, msg: 'Already done.' };
     if (state.cash < r.cost) return { ok: false, msg: 'Not enough cash.' };
     if (!canAct(state)) return { ok: false, msg: 'No action points left this week.' };
     state.cash -= r.cost;
     state.ap -= 1;
-    p.reno.push(renoId);
+    if (renoId === 'repairs') p.repairs = (p.repairs || 0) + 1;
+    else p.reno.push(renoId);
     p.rent += r.rent;
     p.condition = Math.min(100, p.condition + r.condition);
-    p.value += r.value;
+    if (renoId !== 'repairs') p.value += r.value;
     if (renoId === 'solar') p.solar = true;
-    addLog(state, `${r.name} done at your ${p.typeName} on ${p.streetName} ($${r.cost.toLocaleString()}).`, 'action');
+    addLog(state, renoId === 'repairs'
+      ? `Repairs done at your ${p.typeName} on ${p.streetName} ($${r.cost.toLocaleString()}). Condition is now ${p.condition}%.`
+      : `${r.name} done at your ${p.typeName} on ${p.streetName} ($${r.cost.toLocaleString()}).`, 'action');
     return { ok: true };
   }
 
