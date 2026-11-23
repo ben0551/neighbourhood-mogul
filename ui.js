@@ -90,7 +90,8 @@
     const lo = $('#cf-leftover');
     lo.textContent = (rep.cashflow < 0 ? '-' : '') + '$' + Math.abs(rep.cashflow).toLocaleString();
     $('#cf-leftover-box').classList.toggle('negative', rep.cashflow < 0);
-    $('#cf-detail').textContent = `Salary ${NM.fmt(rep.salary)} · Rent ${NM.fmt(rep.property)} · Business ${NM.fmt(rep.business)}`;
+    $('#cf-detail').textContent = `Salary ${NM.fmt(rep.salary)} · Rent ${NM.fmt(rep.property)} · Business ${NM.fmt(rep.business)}` +
+      (rep.vacant > 0 ? ` · ${rep.vacant} empty` : '');
 
     const barwrap = $('#cf-barwrap');
     if (G.mode === 'freedom') {
@@ -257,12 +258,17 @@
     }
     for (const b of G.businesses) {
       const d = NM.DATA.BUSINESSES[b.id];
+      const chg = b.lastValue ? (b.value - b.lastValue) / b.lastValue : 0;
+      const arrow = chg > 0.001 ? `<span class="badge good">▲ ${(chg * 100).toFixed(1)}%</span>`
+        : chg < -0.001 ? `<span class="badge warn">▼ ${(Math.abs(chg) * 100).toFixed(1)}%</span>`
+        : '<span class="badge">—</span>';
       html += `<div class="card">
         <div class="street-head"><h4>⚙ ${esc(d.name)}</h4><span class="badge good">Money Maker</span></div>
+        <div class="row"><span>Value</span><b>${NM.fmt(b.value)} ${arrow}</b></div>
         <div class="row"><span>Income</span><b>${NM.fmt(d.income)} / week</b></div>
         <div class="row"><span>Running costs</span><b>${NM.fmt(d.costWeekly)} / week</b></div>
         <div class="row"><span>Profit</span><b>${NM.fmt(d.income - d.costWeekly)} / week</b></div>
-        <div class="actions"><button class="btn small ghost" data-action="sellbiz" data-id="${d.id}">Sell for ${NM.fmt(d.cost)}</button></div>
+        <div class="actions"><button class="btn small ghost" data-action="sellbiz" data-id="${d.id}">Sell for ${NM.fmt(b.value)}</button></div>
       </div>`;
     }
     return html;
@@ -337,7 +343,7 @@
       <div class="card">
         <div class="row"><span>Cash</span><b>${NM.fmt(G.cash)}</b></div>
         <div class="row"><span>Houses (value − loans)</span><b>${NM.fmt(G.properties.reduce((a, p) => a + p.value - p.mortgage, 0))}</b></div>
-        <div class="row"><span>Businesses</span><b>${NM.fmt(G.businesses.reduce((a, b) => a + NM.DATA.BUSINESSES[b.id].cost, 0))}</b></div>
+        <div class="row"><span>Businesses</span><b>${NM.fmt(G.businesses.reduce((a, b) => a + b.value, 0))}</b></div>
         <div class="row"><span>Debts</span><b>−${NM.fmt(G.debts.reduce((a, x) => a + x.balance, 0))}</b></div>
         <div class="row"><span><b>${L('wealth')}</b></span><b><b>${NM.fmt(rep.wealth)}</b></b></div>
       </div>
@@ -357,6 +363,17 @@
         <div class="row"><span>Miss a payment and it drops.</span><b></b></div>
         <div class="row"><span>4 weeks of on-time payments raises it.</span><b></b></div>
         <div class="row"><span>Bank's interest rate this week</span><b>${(G.market.rate * 100).toFixed(1)}%</b></div>
+      </div>
+      <div class="section-title">Bank loan — borrow money</div>
+      <div class="card">
+        <div class="row"><span>Your borrowing power</span><b>${NM.fmt(Math.max(0, G.credit * 25000 - G.debts.reduce((a, x) => a + x.balance, 0)))}</b></div>
+        <div class="row"><span>Interest</span><b>${(Math.min(0.12, G.market.rate + 0.02) * 100).toFixed(1)}% a year, added to your bills weekly</b></div>
+        <div class="row"><span>Good debt buys Money Makers. Bad debt buys things that earn nothing.</span><b></b></div>
+        <div class="actions">
+          <button class="btn small primary" data-action="borrow" data-amt="5000">Borrow $5,000</button>
+          <button class="btn small primary" data-action="borrow" data-amt="20000">Borrow $20,000</button>
+          <button class="btn small primary" data-action="borrow" data-amt="50000">Borrow $50,000</button>
+        </div>
       </div>
       <div class="section-title">Your debts</div>`;
     if (!G.debts.length) html += '<div class="empty">No debts. Nice!</div>';
@@ -408,6 +425,7 @@
     else if (action === 'buybiz') act(() => NM.buyBusiness(G, id));
     else if (action === 'sellbiz') act(() => NM.sellBusiness(G, id));
     else if (action === 'paydebt') act(() => NM.payDebt(G, Number(btn.getAttribute('data-amt'))));
+    else if (action === 'borrow') act(() => NM.borrow(G, Number(btn.getAttribute('data-amt'))));
     else if (action === 'goto-places') {
       currentTab = 'places';
       $$('.tab').forEach(x => x.classList.toggle('selected', x.dataset.tab === 'places'));
@@ -437,6 +455,10 @@
     if (!items.length) items.push({ t: 'A quiet week on the street.', k: '' });
     ul.innerHTML = items.map(i => `<li class="${i.k}">${esc(i.t)}</li>`).join('');
     $('#wm-note').textContent = summary.won ? '' : `Week ${G.week} begins — you have ${G.ap} actions.`;
+    const rep = NM.weeklyReport(G);
+    $('#wm-breakdown').textContent =
+      `Salary ${NM.fmt(rep.salary)} · Rent ${NM.fmt(rep.property)} · Business ${NM.fmt(rep.business)}` +
+      (rep.vacant > 0 ? ` · ${rep.vacant} propert${rep.vacant === 1 ? 'y' : 'ies'} empty this week` : '');
     $('#modal-week').classList.remove('hidden');
     $('#btn-week-ok').onclick = () => {
       $('#modal-week').classList.add('hidden');

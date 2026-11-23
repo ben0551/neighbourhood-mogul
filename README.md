@@ -39,6 +39,8 @@ Total Wealth → Net Worth, Borrowing Cost → Interest.
   entrepreneur (businesses)
 - Courses that cost money and take weeks — spend now, earn more later
 - Credit score (★ to ★★★★★) affected by missed payments and on-time streaks
+- Bank loans — borrow against your credit to leverage a purchase; interest is a weekly bill, so debt can help or hurt
+- Businesses — values drift weekly (▲/▼), sell at market value, profits count as Money Makers
 - Weekly random events (promotion, roof leak, tenant leaves, rate rises…)
 - Vacancy, condition decay, interest-rate market
 
@@ -59,7 +61,7 @@ tools/balance.js  headless balance harness (Node)
 | mode | win rate | win week (p25 / median / p75) |
 |------|----------|-------------------------------|
 | beginner | 100% | 60 / 68 / 73 |
-| freedom | 100% | 162 / 172 / 187 |
+| freedom | 100% | 127 / 133 / 141 |
 
 One week is one turn; a typical turn takes ~10 seconds, so Financial Freedom
 lands around a 30-minute session.

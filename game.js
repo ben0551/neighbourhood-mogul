@@ -29,10 +29,10 @@
   ];
 
   const PROPERTY_TYPES = {
-    small:  { key: 'small',  name: 'Small House',      price: 100000,  rent: 300,  power: 30,  maintenance: 15, depositPct: 0.20 },
-    family: { key: 'family', name: 'Family House',     price: 250000,  rent: 650,  power: 45,  maintenance: 25, depositPct: 0.20 },
-    duplex: { key: 'duplex', name: 'Duplex',           price: 500000,  rent: 1400, power: 70,  maintenance: 45, depositPct: 0.20 },
-    block:  { key: 'block',  name: 'Apartment Block',  price: 1000000, rent: 3000, power: 120, maintenance: 90, depositPct: 0.25 },
+    small:  { key: 'small',  name: 'Small House',      price: 100000,  rent: 380,  power: 30,  maintenance: 15, depositPct: 0.20 },
+    family: { key: 'family', name: 'Family House',     price: 250000,  rent: 800,  power: 45,  maintenance: 25, depositPct: 0.20 },
+    duplex: { key: 'duplex', name: 'Duplex',           price: 500000,  rent: 1700, power: 70,  maintenance: 45, depositPct: 0.20 },
+    block:  { key: 'block',  name: 'Apartment Block',  price: 1000000, rent: 3600, power: 120, maintenance: 90, depositPct: 0.25 },
   };
 
   const JOBS = {
@@ -58,9 +58,9 @@
   };
 
   const BUSINESSES = {
-    lawn:  { id: 'lawn',  name: 'Lawn Service', cost: 25000, income: 170, costWeekly: 40 },
-    carwash:{ id: 'carwash', name: 'Car Wash',   cost: 40000, income: 240, costWeekly: 60 },
-    cafe:  { id: 'cafe',  name: 'Cafe',          cost: 65000, income: 380, costWeekly: 120 },
+    lawn:  { id: 'lawn',  name: 'Lawn Service', cost: 25000, income: 150, costWeekly: 40 },
+    carwash:{ id: 'carwash', name: 'Car Wash',   cost: 40000, income: 220, costWeekly: 60 },
+    cafe:  { id: 'cafe',  name: 'Cafe',          cost: 65000, income: 320, costWeekly: 120 },
   };
 
   const RENOVATIONS = {
@@ -302,7 +302,7 @@
   function wealth(state) {
     let w = state.cash;
     for (const p of state.properties) w += p.value - p.mortgage;
-    for (const b of state.businesses) w += BUSINESSES[b.id].cost;
+    for (const b of state.businesses) w += b.value;
     for (const d of state.debts) w -= d.balance;
     return Math.round(w);
   }
@@ -320,6 +320,7 @@
       passive: passiveIncome(state),
       livingCosts: exp.total,
       wealth: wealth(state),
+      vacant: state.properties.filter(p => !p.isHome && p.vacant > 0).length,
       detail: exp,
     };
   }
@@ -425,7 +426,7 @@
     if (!canAct(state)) return { ok: false, msg: 'No action points left this week.' };
     state.cash -= b.cost;
     state.ap -= 1;
-    state.businesses.push({ id: businessId });
+    state.businesses.push({ id: businessId, value: b.cost, lastValue: b.cost });
     addLog(state, `Bought a ${b.name} for $${b.cost.toLocaleString()}! It earns $${b.income - b.costWeekly} every week.`, 'good');
     return { ok: true };
   }
@@ -434,12 +435,31 @@
     const i = state.businesses.findIndex(x => x.id === businessId);
     if (i < 0) return { ok: false, msg: 'Not found.' };
     if (!canAct(state)) return { ok: false, msg: 'No action points left this week.' };
-    const b = BUSINESSES[businessId];
-    state.cash += b.cost;
+    const b = state.businesses[i];
+    state.cash += b.value;
     state.businesses.splice(i, 1);
     state.ap -= 1;
-    addLog(state, `Sold your ${b.name} for $${b.cost.toLocaleString()}.`, 'action');
+    addLog(state, `Sold your ${BUSINESSES[businessId].name} for $${b.value.toLocaleString()}.`, 'action');
     return { ok: true };
+  }
+
+  // Bank loan: borrowing can help (buying a Money Maker) or hurt (paying interest on stuff that earns nothing).
+  function borrow(state, amount) {
+    if (state.over) return { ok: false, msg: 'Game over.' };
+    if (!canAct(state)) return { ok: false, msg: 'No action points left this week.' };
+    const cap = state.credit * 25000;
+    const current = state.debts.reduce((a, d) => a + d.balance, 0);
+    const room = Math.max(0, cap - current);
+    const amt = Math.min(Math.round(amount), room);
+    if (amt < 1000) {
+      return { ok: false, msg: `The bank won't lend more (your limit is $${cap.toLocaleString()} at ${state.credit} star${state.credit === 1 ? '' : 's'}).` };
+    }
+    const annual = Math.min(0.12, state.market.rate + 0.02);
+    state.cash += amt;
+    state.ap -= 1;
+    state.debts.push({ name: 'Bank Loan', balance: amt, rate: annual / 52 });
+    addLog(state, `Borrowed $${amt.toLocaleString()} from the bank at ${(annual * 100).toFixed(1)}% a year. Remember: interest is a weekly bill now.`, 'action');
+    return { ok: true, amount: amt };
   }
 
   function payDebt(state, amount) {
@@ -520,6 +540,13 @@
       }
     }
 
+    // business values drift a little each week (trade is up and down)
+    for (const b of state.businesses) {
+      b.lastValue = b.value;
+      const drift = (rnd(state) - 0.45) * 0.02;   // roughly -0.9% .. +1.1%
+      b.value = Math.max(1000, Math.round(b.value * (1 + drift)));
+    }
+
     // market refresh
     for (let i = 0; i < state.market.listings.length; i++) {
       if (chance(state, 0.45)) state.market.listings[i] = makeListing(state);
@@ -572,7 +599,7 @@
     DATA: { STREET_NAMES, PROPERTY_TYPES, JOBS, COURSES, BUSINESSES, RENOVATIONS },
     generateTown, newGame, makeListing,
     salary, propertyIncome, businessIncome, passiveIncome, expenses, totalIncome, wealth, weeklyReport,
-    study, applyJob, buyProperty, sellProperty, renovate, buyBusiness, sellBusiness, payDebt, endWeek,
+    study, applyJob, buyProperty, sellProperty, renovate, buyBusiness, sellBusiness, borrow, payDebt, endWeek,
     mortgagePayment, rateForCredit, fmt,
   };
 });
