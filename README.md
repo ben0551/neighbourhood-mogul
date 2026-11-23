@@ -40,7 +40,8 @@ Total Wealth → Net Worth, Borrowing Cost → Interest.
   entrepreneur (businesses)
 - Courses that cost money and take weeks — spend now, earn more later
 - Credit score (★ to ★★★★★) affected by missed payments and on-time streaks
-- Bank loans — borrow against your credit to leverage a purchase; interest is a weekly bill, so debt can help or hurt
+- **Bank loans** — borrow against your credit to leverage a purchase; interest is a weekly bill, so debt can help or hurt.
+- **Cars** — liabilities: values depreciate every week, running costs hit the weekly bills, and finance means you can owe more than the car is worth (selling it still leaves the loan).
 - Businesses — values drift weekly (▲/▼), sell at market value, profits count as Money Makers
 - Weekly random events (promotion, roof leak, tenant leaves, rate rises…)
 - Vacancy, condition decay, interest-rate market

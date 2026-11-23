@@ -92,6 +92,7 @@
     lo.textContent = (rep.cashflow < 0 ? '-' : '') + '$' + Math.abs(rep.cashflow).toLocaleString();
     $('#cf-leftover-box').classList.toggle('negative', rep.cashflow < 0);
     $('#cf-detail').textContent = `Salary ${NM.fmt(rep.salary)} · Rent ${NM.fmt(rep.property)} · Business ${NM.fmt(rep.business)}` +
+      (G.cars.length ? ` · Cars −${NM.fmt(rep.detail.cars)}` : '') +
       (rep.vacant > 0 ? ` · ${rep.vacant} empty` : '');
 
     const barwrap = $('#cf-barwrap');
@@ -275,10 +276,40 @@
         <div class="actions"><button class="btn small ghost" data-action="sellbiz" data-id="${d.id}">Sell for ${NM.fmt(b.value)}</button></div>
       </div>`;
     }
+    html += '<div class="section-title">Cars — Money Takers (they cost money, they never earn)</div>';
+    if (!G.cars.length) {
+      html += '<div class="empty">No car. That is fine — no car payments, no car costs.</div>';
+    }
+    for (const c of G.cars) {
+      const d = NM.DATA.CARS[c.id];
+      const loan = G.debts.find(x => x.carId === c.id);
+      const chg = c.lastValue ? (c.value - c.lastValue) / c.lastValue : 0;
+      html += `<div class="card">
+        <div class="street-head"><h4>${esc(d.name)}</h4><span class="badge warn">Money Taker</span></div>
+        <div class="row"><span>Value</span><b>${NM.fmt(c.value)} <span class="badge warn">▼ ${(Math.abs(chg) * 100).toFixed(1)}%</b></span></div>
+        <div class="row"><span>Runs on</span><b>${NM.fmt(d.running)} / week</b></div>
+        ${loan ? `<div class="row"><span>You still owe on it</span><b>${NM.fmt(loan.balance)} at ${(loan.rate * 52 * 100).toFixed(1)}%</b></div>` : ''}
+        <div class="row"><span>Selling it</span><b>You get the value, not what you paid</b></div>
+        <div class="actions"><button class="btn small ghost" data-action="sellcar" data-id="${d.id}">Sell for ${NM.fmt(c.value)}</button></div>
+      </div>`;
+    }
+    html += '<div class="section-title">Buy a car</div>';
+    for (const car of Object.values(NM.DATA.CARS)) {
+      const owned = G.cars.some(c => c.id === car.id);
+      html += `<div class="card">
+        <div class="street-head"><h4>${esc(car.name)}</h4>${owned ? '<span class="badge good">Owned</span>' : ''}</div>
+        <div class="row"><span>Price</span><b>${NM.fmt(car.cost)}</b></div>
+        <div class="row"><span>Loses value</span><b>${(car.deprec * 100).toFixed(1)}% every week</b></div>
+        <div class="row"><span>Runs on</span><b>${NM.fmt(car.running)} / week</b></div>
+        <div class="row"><span>Finance</span><b>${(Math.min(0.15, G.market.rate + 0.04) * 100).toFixed(1)}% a year — you can end up owing more than it is worth</b></div>
+        <div class="actions">
+          <button class="btn small primary" data-action="buycar" data-id="${car.id}" data-fin="0" ${owned || G.cash < car.cost ? 'disabled' : ''}>Buy cash ${NM.fmt(car.cost)}</button>
+          <button class="btn small ghost" data-action="buycar" data-id="${car.id}" data-fin="1" ${owned ? 'disabled' : ''}>Finance ($0 today)</button>
+        </div>
+      </div>`;
+    }
     return html;
   }
-
-  // ---------- tab: career ----------
   function tabCareer() {
     const job = G.job ? NM.DATA.JOBS[G.job.id] : null;
     let html = '<div class="section-title">Your job</div>';
@@ -358,6 +389,7 @@
         <div class="row"><span>Rates</span><b>${NM.fmt(d.rates)}</b></div>
         <div class="row"><span>Maintenance</span><b>${NM.fmt(d.maintenance)}</b></div>
         <div class="row"><span>Food &amp; living</span><b>${NM.fmt(d.living)}</b></div>
+        <div class="row"><span>Car costs</span><b>${NM.fmt(d.cars)}</b></div>
         <div class="row"><span>${L('borrowing')} on debts</span><b>${NM.fmt(d.debtInterest)}</b></div>
         <div class="row"><span><b>Total</b></span><b><b>${NM.fmt(d.total)}</b></b></div>
       </div>
@@ -432,6 +464,8 @@
     else if (action === 'sellbiz') act(() => NM.sellBusiness(G, id));
     else if (action === 'paydebt') act(() => NM.payDebt(G, Number(btn.getAttribute('data-amt'))));
     else if (action === 'borrow') act(() => NM.borrow(G, Number(btn.getAttribute('data-amt'))));
+    else if (action === 'buycar') act(() => NM.buyCar(G, id, btn.getAttribute('data-fin') === '1'));
+    else if (action === 'sellcar') act(() => NM.sellCar(G, id));
     else if (action === 'goto-places') {
       currentTab = 'places';
       $$('.tab').forEach(x => x.classList.toggle('selected', x.dataset.tab === 'places'));

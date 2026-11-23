@@ -70,6 +70,13 @@
     repairs: { id: 'repairs', name: 'Repairs',       cost: 1500,  rent: 0,  condition: 30, value: 2000,  powerCut: 0 },
   };
 
+  // Cars are liabilities: they lose value every week and cost money to run.
+  const CARS = {
+    used:   { id: 'used',   name: 'Used Hatch',  cost: 15000, running: 35,  deprec: 0.004 },
+    sedan:  { id: 'sedan',  name: 'Family Sedan', cost: 35000, running: 60,  deprec: 0.005 },
+    luxury: { id: 'luxury', name: 'Luxury SUV',  cost: 80000, running: 120, deprec: 0.007 },
+  };
+
   // weight, minWeek, apply(state) -> message
   const EVENTS = [
     { id: 'promotion', w: 6, min: 4, good: true, apply(s) {
@@ -182,6 +189,7 @@
       properties: [],
       debts: [],
       businesses: [],
+      cars: [],
       town,
       market: { rate: 0.05, listings: [] },
       ap: 2,
@@ -284,14 +292,16 @@
       maintenance += PROPERTY_TYPES[p.type].maintenance + Math.max(0, (100 - p.condition) * 0.4);
     }
     const living = 60;
+    const cars = state.cars.reduce((a, c) => a + CARS[c.id].running, 0);
     const debtInterest = state.debts.reduce((a, d) => a + d.balance * d.rate, 0);
-    const total = mortgage + power + rates + maintenance + living + debtInterest;
+    const total = mortgage + power + rates + maintenance + living + cars + debtInterest;
     return {
       mortgage: Math.round(mortgage),
       power: Math.round(power),
       rates: Math.round(rates),
       maintenance: Math.round(maintenance),
       living,
+      cars: Math.round(cars),
       debtInterest: Math.round(debtInterest),
       total: Math.round(total),
     };
@@ -303,6 +313,7 @@
     let w = state.cash;
     for (const p of state.properties) w += p.value - p.mortgage;
     for (const b of state.businesses) w += b.value;
+    for (const c of state.cars) w += c.value;
     for (const d of state.debts) w -= d.balance;
     return Math.round(w);
   }
@@ -447,6 +458,51 @@
     return { ok: true };
   }
 
+  // Cars: a liability you can buy with cash or on finance. Value falls every week.
+  function buyCar(state, carId, financed) {
+    const car = CARS[carId];
+    if (!car) return { ok: false, msg: 'Not available.' };
+    if (state.cars.some(c => c.id === carId)) return { ok: false, msg: 'You already own that car.' };
+    if (!canAct(state)) return { ok: false, msg: 'No action points left this week.' };
+    if (!financed && state.cash < car.cost) return { ok: false, msg: 'Not enough cash.' };
+    state.ap -= 1;
+    if (financed) {
+      const annual = Math.min(0.15, state.market.rate + 0.04);
+      state.debts.push({ name: 'Car Loan', balance: car.cost, rate: annual / 52, carId });
+      addLog(state, `Bought a ${car.name} on finance: $0 today, but you owe $${car.cost.toLocaleString()} at ${(annual * 100).toFixed(1)}% a year. Cars lose value fast — be careful.`, 'action');
+    } else {
+      state.cash -= car.cost;
+      addLog(state, `Bought a ${car.name} for $${car.cost.toLocaleString()} cash. Cars lose value every week — a Money Taker.`, 'action');
+    }
+    state.cars.push({ id: carId, value: car.cost, lastValue: car.cost });
+    return { ok: true };
+  }
+
+  function sellCar(state, carId) {
+    const i = state.cars.findIndex(c => c.id === carId);
+    if (i < 0) return { ok: false, msg: 'Not found.' };
+    if (!canAct(state)) return { ok: false, msg: 'No action points left this week.' };
+    const c = state.cars[i];
+    const loan = state.debts.find(d => d.carId === carId);
+    let paid = 0;
+    if (loan) {
+      paid = Math.min(loan.balance, c.value);
+      loan.balance -= paid;
+      state.debts = state.debts.filter(d => d.balance > 1);
+    }
+    const cash = c.value - paid;
+    state.cash += cash;
+    state.cars.splice(i, 1);
+    state.ap -= 1;
+    const name = CARS[carId].name;
+    if (loan && loan.balance > 1) {
+      addLog(state, `Sold your ${name} for $${c.value.toLocaleString()} but it had a loan: you paid off $${paid.toLocaleString()} and still owe $${Math.round(loan.balance).toLocaleString()}. That is bad debt.`, 'bad');
+    } else {
+      addLog(state, `Sold your ${name} for $${c.value.toLocaleString()}${paid ? ` (loan paid off: $${paid.toLocaleString()})` : ''}.`, 'action');
+    }
+    return { ok: true };
+  }
+
   // Bank loan: borrowing can help (buying a Money Maker) or hurt (paying interest on stuff that earns nothing).
   function borrow(state, amount) {
     if (state.over) return { ok: false, msg: 'Game over.' };
@@ -551,6 +607,13 @@
       b.value = Math.max(1000, Math.round(b.value * (1 + drift)));
     }
 
+    // cars depreciate every week
+    for (const c of state.cars) {
+      c.lastValue = c.value;
+      const d = 1 - CARS[c.id].deprec + (rnd(state) - 0.5) * 0.002;
+      c.value = Math.max(500, Math.round(c.value * d));
+    }
+
     // market refresh
     for (let i = 0; i < state.market.listings.length; i++) {
       if (chance(state, 0.45)) state.market.listings[i] = makeListing(state);
@@ -605,10 +668,10 @@
   }
 
   return {
-    DATA: { STREET_NAMES, PROPERTY_TYPES, JOBS, COURSES, BUSINESSES, RENOVATIONS },
+    DATA: { STREET_NAMES, PROPERTY_TYPES, JOBS, COURSES, BUSINESSES, RENOVATIONS, CARS },
     generateTown, newGame, makeListing,
     salary, propertyIncome, businessIncome, passiveIncome, expenses, totalIncome, wealth, weeklyReport,
-    study, applyJob, buyProperty, sellProperty, renovate, buyBusiness, sellBusiness, borrow, payDebt, endWeek,
+    study, applyJob, buyProperty, sellProperty, renovate, buyBusiness, sellBusiness, borrow, payDebt, buyCar, sellCar, endWeek,
     mortgagePayment, rateForCredit, fmt,
   };
 });
