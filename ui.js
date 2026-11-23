@@ -6,6 +6,7 @@
   let currentTab = 'town';
   let seenLog = 0;
   let toastEl = null;
+  let openReno = null;          // property id whose renovation panel is open
 
   // kid word -> real finance word
   const TERMS = {
@@ -239,7 +240,7 @@
           <button class="btn small" data-action="reno" data-id="${p.id}">Renovate</button>
           ${p.isHome ? '' : `<button class="btn small ghost" data-action="sell" data-id="${p.id}">Sell</button>`}
         </div>
-        <div class="reno-panel hidden" id="reno-${p.id}">
+        <div class="reno-panel${openReno === p.id ? '' : ' hidden'}" id="reno-${p.id}">
           ${Object.values(NM.DATA.RENOVATIONS).map(r => {
             const done = r.id !== 'repairs' && p.reno.includes(r.id);
             const bits = [];
@@ -419,8 +420,10 @@
     if (action === 'buy') act(() => NM.buyProperty(G, Number(id)));
     else if (action === 'sell') act(() => NM.sellProperty(G, Number(id)));
     else if (action === 'reno') {
-      const panel = document.getElementById('reno-' + id);
-      if (panel) panel.classList.toggle('hidden');
+      const pid = Number(id);
+      openReno = (openReno === pid) ? null : pid;
+      const panel = document.getElementById('reno-' + pid);
+      if (panel) panel.classList.toggle('hidden', openReno !== pid);
     }
     else if (action === 'renovate') act(() => NM.renovate(G, Number(id), btn.getAttribute('data-reno')));
     else if (action === 'study') act(() => NM.study(G, id));
