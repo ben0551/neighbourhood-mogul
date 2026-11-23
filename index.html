@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Neighbourhood Mogul — a money game for kids</title>
+<meta name="description" content="A neighbourhood-building game that teaches income, expenses, assets, debt and cash flow.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ TITLE ============ -->
+<section id="screen-title" class="screen active">
+  <div class="title-card">
+    <div class="title-houses" aria-hidden="true"><span class="th th1"></span><span class="th th2"></span><span class="th th3"></span></div>
+    <h1>Neighbourhood<br>Mogul</h1>
+    <p class="tagline">Build houses. Earn rent. Reach <strong>Financial Freedom</strong>.</p>
+    <div class="title-buttons">
+      <button id="btn-continue" class="btn big primary hidden">Continue</button>
+      <button id="btn-new" class="btn big primary">New Game</button>
+      <button id="btn-how" class="btn big ghost">How to Play</button>
+    </div>
+    <p class="fine">A money game for ages 8+. No downloads, no ads, no sign-ups.</p>
+  </div>
+</section>
+
+<!-- ============ SETUP ============ -->
+<section id="screen-setup" class="screen">
+  <div class="setup-card">
+    <h2>Start a new game</h2>
+    <label class="field">Your name
+      <input id="inp-name" type="text" maxlength="16" value="Player" autocomplete="off">
+    </label>
+
+    <div class="field">Choose a goal
+      <div class="choice-row" id="mode-row">
+        <button class="choice" data-mode="beginner">
+          <strong>Beginner</strong>
+          <span>Reach <b>$50,000</b> total wealth or own <b>3 properties</b>.</span>
+        </button>
+        <button class="choice selected" data-mode="freedom">
+          <strong>Financial Freedom</strong>
+          <span>Your Money Makers must cover <b>all</b> your bills.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="field">First job <small>(you can change jobs later)</small>
+      <div class="choice-row" id="job-row">
+        <button class="choice selected" data-job="shopassistant"><strong>Shop Assistant</strong><span>$400 / week</span></button>
+        <button class="choice" data-job="lawnmower"><strong>Lawn Mower</strong><span>$300 / week</span></button>
+        <button class="choice" data-job="dogwalker"><strong>Dog Walker</strong><span>$220 / week</span></button>
+      </div>
+    </div>
+
+    <p class="setup-note">You start with <b>$5,000</b>, a small house and a <b>home loan</b> to pay off — $170 or so every week, like a real mortgage.</p>
+    <div class="title-buttons">
+      <button id="btn-start" class="btn big primary">Move in →</button>
+      <button id="btn-back" class="btn big ghost">Back</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section id="screen-game" class="screen">
+  <header class="hud">
+    <div class="hud-left">
+      <button id="btn-menu" class="btn small ghost" title="Menu">☰</button>
+      <div>
+        <div class="hud-title">Neighbourhood Mogul</div>
+        <div class="hud-sub">Week <span id="hud-week">1</span> · <span id="hud-name">Player</span></div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-stat"><span class="hud-label">Cash</span><span id="hud-cash" class="hud-value">$0</span></div>
+      <div class="hud-stat"><span class="hud-label">Credit</span><span id="hud-credit" class="hud-value stars">★★★</span></div>
+      <label class="finance-toggle" title="Show real money words">
+        <input type="checkbox" id="chk-finance"><span>Finance mode</span>
+      </label>
+    </div>
+  </header>
+
+  <div class="cashflow-panel">
+    <div class="cf-row">
+      <div class="cf-box"><span class="cf-label" data-term="income">Income</span><span class="cf-value" id="cf-income">$0</span></div>
+      <div class="cf-box"><span class="cf-label" data-term="expenses">Expenses</span><span class="cf-value" id="cf-expenses">$0</span></div>
+      <div class="cf-box big" id="cf-leftover-box"><span class="cf-label" data-term="leftover">Money Left Over</span><span class="cf-value" id="cf-leftover">$0</span></div>
+    </div>
+    <div class="cf-sub">
+      <span id="cf-detail">Salary $0 · Rent $0 · Business $0</span>
+      <span id="cf-goal"></span>
+    </div>
+    <div class="cf-barwrap hidden" id="cf-barwrap">
+      <div class="cf-barlabel" id="cf-barlabel"></div>
+      <div class="cf-bar"><div class="cf-barfill" id="cf-barfill"></div></div>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab selected" data-tab="town">Town</button>
+    <button class="tab" data-tab="places">My Places</button>
+    <button class="tab" data-tab="career">Career</button>
+    <button class="tab" data-tab="money">Money</button>
+    <button class="tab" data-tab="log">Log <span class="log-badge hidden" id="log-badge"></span></button>
+  </nav>
+
+  <main class="tab-body" id="tab-body"></main>
+
+  <div class="endweek-bar">
+    <div class="ap-dots" id="ap-dots" title="Action points"></div>
+    <button id="btn-endweek" class="btn big primary">End Week →</button>
+  </div>
+</section>
+
+<!-- ============ WEEK SUMMARY MODAL ============ -->
+<div id="modal-week" class="modal-back hidden">
+  <div class="modal">
+    <h3 id="week-modal-title">Week 1</h3>
+    <div class="week-numbers">
+      <div><span>Income</span><b id="wm-income">$0</b></div>
+      <div><span>Expenses</span><b id="wm-expenses">$0</b></div>
+      <div class="wm-left"><span data-term="leftover">Money Left Over</span><b id="wm-leftover">$0</b></div>
+    </div>
+    <ul class="week-events" id="wm-events"></ul>
+    <p class="week-note" id="wm-note"></p>
+    <button class="btn big primary" id="btn-week-ok">Keep going →</button>
+  </div>
+</div>
+
+<!-- ============ WIN MODAL ============ -->
+<div id="modal-win" class="modal-back hidden">
+  <div class="modal win">
+    <div class="win-stars" aria-hidden="true">★ ★ ★</div>
+    <h3>You did it!</h3>
+    <p id="win-text"></p>
+    <div class="win-stats" id="win-stats"></div>
+    <div class="title-buttons">
+      <button class="btn big primary" id="btn-win-again">Play again</button>
+      <button class="btn big ghost" id="btn-win-title">Title screen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MENU MODAL ============ -->
+<div id="modal-menu" class="modal-back hidden">
+  <div class="modal">
+    <h3>Menu</h3>
+    <div class="title-buttons">
+      <button class="btn big primary" id="btn-resume">Resume</button>
+      <button class="btn big ghost" id="btn-restart">Restart game</button>
+      <button class="btn big ghost" id="btn-quit">Quit to title</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HOW TO PLAY MODAL ============ -->
+<div id="modal-how" class="modal-back hidden">
+  <div class="modal how">
+    <h3>How to play</h3>
+    <ol>
+      <li>Each week you <b>collect money</b> (salary + rent) and <b>pay bills</b> (loans, power, rates).</li>
+      <li>Watch <b>Money Left Over</b>. Green means healthy. Red means danger.</li>
+      <li>You get <b>2 actions</b> each week: study, apply for jobs, buy or sell property, renovate, pay debts.</li>
+      <li><b>Money Makers</b> (rental houses, businesses) put money in your pocket every week.</li>
+      <li>Reach your goal: <b>Financial Freedom</b> means your Money Makers cover all your bills.</li>
+    </ol>
+    <p class="fine">Finance mode (top right) swaps the kid words for the real money words.</p>
+    <button class="btn big primary" id="btn-how-ok">Got it</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
