@@ -28,7 +28,10 @@ Total Wealth → Net Worth, Borrowing Cost → Interest.
 ## What's in the game
 
 - Procedurally generated neighbourhood (5–7 streets with desirability, school,
-  crime and growth scores that drive prices, rents and appreciation)
+  crime and growth scores that drive prices, rents and appreciation), drawn as a
+  Monopoly-style village board: street nameplates, property tiles with
+  colour-coded bands and CSS-drawn houses, FOR SALE / YOURS / TO LET signs,
+  roads, and parks/schools/ponds filling the empty lots
 - 4 property types (small house, family house, duplex, apartment block) with
   mortgages, deposits, credit-score-dependent interest rates
 - Renovations: paint, kitchen, solar panels, repairs
