@@ -226,3 +226,139 @@ h1 { font-size: 42px; line-height: 1.02; margin: 6px 0 10px; letter-spacing: -1p
   h1 { font-size: 54px; }
   .cf-value { font-size: 24px; }
 }
+
+/* ---------- village board (town tab) ---------- */
+.board {
+  background: #e9f2e4;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow);
+}
+.board-legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.legend-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+  background: var(--card); border: 2px solid var(--line); border-radius: 99px; padding: 3px 10px;
+}
+.legend-chip i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.legend-chip.t-small i { background: #aae0fa; }
+.legend-chip.t-family i { background: #f7941d; }
+.legend-chip.t-duplex i { background: #ed1b24; }
+.legend-chip.t-block i { background: #0072bb; }
+
+.street-block { margin-bottom: 14px; }
+.street-block:last-child { margin-bottom: 0; }
+.street-head-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.street-sign {
+  display: inline-block; background: #1f7a42; color: #fff; font-weight: 800; font-size: 13px;
+  padding: 4px 12px; border-radius: 5px; border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #1f7a42; letter-spacing: .4px;
+}
+.street-tiles {
+  display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tile {
+  flex: 0 0 118px; width: 118px; background: var(--card); border: 2px solid var(--ink);
+  border-radius: 10px; padding: 0 6px 8px; text-align: center; font-size: 12px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.tile-band {
+  margin: 0 -6px 4px; padding: 3px 2px; font-size: 10px; font-weight: 800;
+  border-bottom: 2px solid var(--ink); border-radius: 8px 8px 0 0; width: calc(100% + 12px);
+}
+.t-small .tile-band { background: #aae0fa; color: var(--ink); }
+.t-family .tile-band { background: #f7941d; color: #fff; }
+.t-duplex .tile-band { background: #ed1b24; color: #fff; }
+.t-block .tile-band { background: #0072bb; color: #fff; }
+
+.tile-art { height: 52px; display: flex; align-items: flex-end; justify-content: center; }
+.tile-name { font-size: 10px; font-weight: 700; color: var(--muted); padding-top: 2px; }
+.tile-price { font-weight: 800; font-size: 13px; }
+.tile-sub { color: var(--muted); font-size: 11px; }
+.tile-sign {
+  font-size: 9px; font-weight: 800; letter-spacing: .5px; padding: 1px 6px;
+  border-radius: 4px; margin: 4px 0 2px; display: inline-block;
+}
+.sign-sale { background: #d64545; color: #fff; }
+.sign-yours { background: #e0a32e; color: var(--ink); }
+.sign-tolet { background: #3a7bd0; color: #fff; }
+.tile .btn { margin-top: 5px; }
+.tile.decor { background: #f3f7ee; border-style: dashed; }
+
+.cond-bar.mini { width: 90px; margin-top: 4px; }
+
+/* roads between streets */
+.road {
+  height: 16px; margin-top: 8px; border-radius: 4px; background-color: #6b6b6b;
+  background-image: repeating-linear-gradient(90deg, #f7f3e8 0 14px, transparent 14px 28px);
+  background-size: 28px 3px; background-position: center; background-repeat: repeat-x;
+}
+
+/* --- CSS-drawn buildings --- */
+.house { position: relative; width: 40px; height: 46px; margin-bottom: 2px; }
+.house .roof {
+  position: absolute; top: 0; left: -4px; width: 0; height: 0;
+  border-left: 24px solid transparent; border-right: 24px solid transparent;
+  border-bottom: 16px solid #8c5a3c;
+}
+.house .body {
+  position: absolute; top: 15px; left: 2px; width: 36px; height: 28px;
+  background: #f3e2c3; border: 2px solid #8c5a3c; display: block;
+}
+.house .door { position: absolute; bottom: 0; left: 13px; width: 9px; height: 13px; background: #8c5a3c; display: block; }
+.house .win { position: absolute; top: 6px; left: 5px; width: 8px; height: 8px; background: #bcd8e8; border: 1px solid #8c5a3c; display: block; }
+.house.lg { transform: scale(1.15); }
+.house.sm { transform: scale(.8); transform-origin: bottom center; }
+.duplex { display: flex; gap: 4px; align-items: flex-end; }
+
+.bldg {
+  width: 34px; height: 48px; background-color: #d9dee6; border: 2px solid #5b6472; border-radius: 2px;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 6px, #5b6472 6px 8px),
+    repeating-linear-gradient(90deg, transparent 0 8px, #5b6472 8px 10px);
+  background-position: 4px 4px;
+}
+
+.tree { position: relative; width: 34px; height: 44px; }
+.tree i {
+  position: absolute; top: 0; left: 1px; width: 0; height: 0;
+  border-left: 16px solid transparent; border-right: 16px solid transparent;
+  border-bottom: 30px solid #2e9e5b;
+}
+.tree b { position: absolute; bottom: 0; left: 13px; width: 8px; height: 14px; background: #8c5a3c; }
+
+.school { position: relative; width: 44px; height: 34px; }
+.school i {
+  position: absolute; bottom: 0; left: 0; width: 44px; height: 24px;
+  background: #f0e0b8; border: 2px solid #b08d4f;
+}
+.school b {
+  position: absolute; top: 0; left: 19px; width: 3px; height: 12px; background: #b08d4f;
+}
+.school b::after {
+  content: ""; position: absolute; top: 0; left: 3px; width: 9px; height: 6px; background: #d64545;
+}
+
+.pond { width: 44px; height: 26px; border-radius: 50%; background: #8ecbe8; border: 2px solid #4d93b8; margin-top: 12px; }
+
+.lot {
+  width: 40px; height: 30px; margin-top: 10px; border: 2px dashed #b6c9a6; border-radius: 6px;
+  background: #eef5e6;
+}
+
+.shops { position: relative; width: 44px; height: 36px; }
+.shops i {
+  position: absolute; bottom: 0; left: 0; width: 44px; height: 22px; background: #e8ddc8; border: 2px solid #8c5a3c;
+}
+.shops b {
+  position: absolute; top: 0; left: 0; width: 44px; height: 10px;
+  background: repeating-linear-gradient(90deg, #d64545 0 7px, #fff 7px 14px);
+  border: 2px solid #8c5a3c; border-bottom: none;
+}
+
+@media (min-width: 700px) {
+  .tile { flex-basis: 128px; width: 128px; }
+  .street-tiles { overflow-x: visible; flex-wrap: wrap; }
+}

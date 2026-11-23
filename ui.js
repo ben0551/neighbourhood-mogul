@@ -132,38 +132,87 @@
 
   function renderAll() { renderHud(); renderTab(); }
 
-  // ---------- tab: town ----------
+  // ---------- tab: town (village board) ----------
+  const TYPE_CLASS = { small: 't-small', family: 't-family', duplex: 't-duplex', block: 't-block' };
+
+  function houseArt(type) {
+    if (type === 'block') return '<div class="bldg" aria-hidden="true"></div>';
+    if (type === 'duplex') return '<div class="duplex" aria-hidden="true"><span class="house sm"><i class="roof"></i><i class="body"><i class="door"></i></i></span><span class="house sm"><i class="roof"></i><i class="body"><i class="door"></i></i></span></div>';
+    const cls = type === 'family' ? 'house lg' : 'house';
+    return `<div class="${cls}" aria-hidden="true"><i class="roof"></i><i class="body"><i class="door"></i><i class="win"></i></i></div>`;
+  }
+
+  function decorTile(streetName, i) {
+    // deterministic filler so the village is stable between renders
+    let h = 0;
+    const key = streetName + '#' + i;
+    for (let j = 0; j < key.length; j++) h = (h * 31 + key.charCodeAt(j)) >>> 0;
+    const kinds = ['park', 'school', 'pond', 'empty', 'shops'];
+    const kind = kinds[h % kinds.length];
+    const art = {
+      park: '<div class="tree" aria-hidden="true"><i></i><b></b></div>',
+      school: '<div class="school" aria-hidden="true"><i></i><b></b></div>',
+      pond: '<div class="pond" aria-hidden="true"></div>',
+      empty: '<div class="lot" aria-hidden="true"></div>',
+      shops: '<div class="shops" aria-hidden="true"><i></i><b></b></div>',
+    }[kind];
+    const name = { park: 'Park', school: 'School', pond: 'Pond', empty: 'Empty lot', shops: 'Shops' }[kind];
+    return `<div class="tile decor"><div class="tile-art">${art}</div><div class="tile-name">${name}</div></div>`;
+  }
+
+  function tileSale(l) {
+    const t = NM.DATA.PROPERTY_TYPES[l.type];
+    const deposit = Math.round(l.price * t.depositPct);
+    return `<div class="tile sale ${TYPE_CLASS[l.type]}">
+      <div class="tile-band">${esc(l.typeName)}</div>
+      <div class="tile-art">${houseArt(l.type)}</div>
+      <div class="tile-sign sign-sale">FOR SALE</div>
+      <div class="tile-price">${NM.fmt(l.price)}</div>
+      <div class="tile-sub">Deposit ${NM.fmt(deposit)}</div>
+      <div class="tile-sub">Rent ${NM.fmt(l.rent)}/wk</div>
+      <button class="btn tiny primary" data-action="buy" data-id="${l.id}">Buy</button>
+    </div>`;
+  }
+
+  function tileOwned(p) {
+    const sign = p.vacant > 0 ? '<div class="tile-sign sign-tolet">TO LET</div>' : '<div class="tile-sign sign-yours">YOURS</div>';
+    return `<div class="tile owned ${TYPE_CLASS[p.type]}">
+      <div class="tile-band">${esc(p.typeName)}</div>
+      <div class="tile-art">${houseArt(p.type)}</div>
+      ${sign}
+      <div class="tile-price">${NM.fmt(p.value)}</div>
+      <div class="tile-sub">${p.isHome ? 'Your home' : 'Rent ' + NM.fmt(p.rent) + '/wk'}</div>
+      <div class="cond-bar mini"><i style="width:${p.condition}%"></i></div>
+      <button class="btn tiny" data-action="goto-places">Manage</button>
+    </div>`;
+  }
+
   function tabTown() {
-    let html = '<div class="section-title">For sale this week</div>';
-    const listings = G.market.listings;
-    if (!listings.length) html += '<div class="empty">Nothing for sale right now — check back next week.</div>';
-    for (const l of listings) {
-      const t = NM.DATA.PROPERTY_TYPES[l.type];
-      const deposit = Math.round(l.price * t.depositPct);
-      html += `<div class="card">
-        <div class="street-head"><h4>⌂ ${esc(l.typeName)}</h4><span class="badge">${esc(l.street)}</span></div>
-        <div class="row"><span>Price</span><b>${NM.fmt(l.price)}</b></div>
-        <div class="row"><span>Deposit needed (1 − ${Math.round((1 - t.depositPct) * 100)}% loan)</span><b>${NM.fmt(deposit)}</b></div>
-        <div class="row"><span>Rent</span><b>${NM.fmt(l.rent)} / week</b></div>
-        <div class="row"><span>Condition</span><b>${l.condition}%</b></div>
-        <div class="actions"><button class="btn small primary" data-action="buy" data-id="${l.id}">Buy</button></div>
-      </div>`;
-    }
-    html += '<div class="section-title">The neighbourhood</div>';
+    const legend = Object.values(NM.DATA.PROPERTY_TYPES).map(t =>
+      `<span class="legend-chip ${TYPE_CLASS[t.key]}"><i></i>${esc(t.name)}</span>`).join('');
+    let html = `<div class="board-legend">${legend}</div><div class="board">`;
     for (const st of G.town) {
       const owned = G.properties.filter(p => p.street === st.name);
+      const listings = G.market.listings.filter(l => l.street === st.name);
+      const tiles = owned.map(tileOwned).concat(listings.map(tileSale));
+      const fill = Math.max(0, 4 - tiles.length);
+      for (let i = 0; i < fill; i++) tiles.push(decorTile(st.name, i));
       const bar = (v, max) => `<span class="score-bar"><i style="width:${Math.round(v / max * 100)}%"></i></span>`;
-      html += `<div class="card">
-        <div class="street-head"><h4>${esc(st.name)}</h4></div>
-        <div class="street-scores">
-          <span>Desirability ${bar(st.desirability, 100)}</span>
-          <span>School ${bar(st.school, 100)}</span>
-          <span>Low crime ${bar(100 - st.crime, 100)}</span>
-          <span>Growth ${bar(st.growth, 10)}</span>
+      html += `<div class="street-block">
+        <div class="street-head-row">
+          <span class="street-sign">${esc(st.name)}</span>
+          <span class="street-scores">
+            <span>Desirability ${bar(st.desirability, 100)}</span>
+            <span>School ${bar(st.school, 100)}</span>
+            <span>Low crime ${bar(100 - st.crime, 100)}</span>
+            <span>Growth ${bar(st.growth, 10)}</span>
+          </span>
         </div>
-        ${owned.length ? `<div class="row"><span>You own</span><b>${owned.map(p => esc(p.typeName)).join(', ')}</b></div>` : ''}
+        <div class="street-tiles">${tiles.join('')}</div>
+        <div class="road" aria-hidden="true"></div>
       </div>`;
     }
+    html += '</div>';
     return html;
   }
 
@@ -359,6 +408,12 @@
     else if (action === 'buybiz') act(() => NM.buyBusiness(G, id));
     else if (action === 'sellbiz') act(() => NM.sellBusiness(G, id));
     else if (action === 'paydebt') act(() => NM.payDebt(G, Number(btn.getAttribute('data-amt'))));
+    else if (action === 'goto-places') {
+      currentTab = 'places';
+      $$('.tab').forEach(x => x.classList.toggle('selected', x.dataset.tab === 'places'));
+      renderTab();
+      window.scrollTo(0, 0);
+    }
   });
 
   // ---------- end week ----------
